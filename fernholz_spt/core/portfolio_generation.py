@@ -22,7 +22,45 @@ class FunctionallyGeneratedPortfolio:
             market_model: Initialized MarketModel instance
         """
         self.market_model = market_model
-        
+   
+    @staticmethod
+    def _numerical_gradient(func: Callable[[np.ndarray], float],
+                            x: np.ndarray,
+                            eps: float = 1e-7) -> np.ndarray:
+        """Numerically approximates the gradient of a scalar function."""
+        grad = np.zeros_like(x, dtype=float)
+        for i in range(len(x)):
+            x_plus = x.copy()
+            x_plus[i] += eps
+            x_minus = x.copy()
+            x_minus[i] -= eps
+            grad[i] = (func(x_plus) - func(x_minus)) / (2 * eps)
+        return grad
+
+    @staticmethod
+    def _numerical_hessian(func: Callable[[np.ndarray], float],
+                           x: np.ndarray,
+                           eps: float = 1e-5) -> np.ndarray:
+        """Numerically approximates the Hessian matrix of a scalar function."""
+        n = len(x)
+        hess = np.zeros((n, n), dtype=float)
+        # Calculate diagonal elements (second-order direct partial derivatives)
+        for i in range(n):
+            x_plus_eps = x.copy()
+            x_plus_eps[i] += eps
+            x_minus_eps = x.copy()
+            x_minus_eps[i] -= eps
+            hess[i, i] = (func(x_plus_eps) - 2 * func(x) + func(x_minus_eps)) / (eps**2)     
+                    # Calculate off-diagonal elements (second-order mixed partial derivatives)
+        for i in range(n):
+            for j in range(i + 1, n):
+                x_pp = x.copy(); x_pp[i] += eps; x_pp[j] += eps
+                x_pm = x.copy(); x_pm[i] += eps; x_pm[j] -= eps
+                x_mp = x.copy(); x_mp[i] -= eps; x_mp[j] += eps
+                x_mm = x.copy(); x_mm[i] -= eps; x_mm[j] -= eps
+                hess[i, j] = (func(x_pp) - func(x_pm) - func(x_mp) + func(x_mm)) / (4 * eps**2)
+                hess[j, i] = hess[i, j] # Hessian is symmetric
+        return hess
     def equal_weighted(self) -> pd.DataFrame:
         """
         Generate equal-weighted portfolio.
@@ -155,90 +193,314 @@ class FunctionallyGeneratedPortfolio:
             
         return weights
     
-    def custom_generated(self, 
-                         generating_function: Callable[[np.ndarray], float],
-                         gradient_function: Optional[Callable[[np.ndarray], np.ndarray]] = None) -> pd.DataFrame:
-        """
-        Generate portfolio using a custom generating function.
+    # def custom_generated(self, 
+    #                      generating_function: Callable[[np.ndarray], float],
+    #                      gradient_function: Optional[Callable[[np.ndarray], np.ndarray]] = None) -> pd.DataFrame:
+    #     """
+    #     Generate portfolio using a custom generating function.
         
-        According to Fernholz's theory, a portfolio π can be generated from a
-        function G using:
+    #     According to Fernholz's theory, a portfolio π can be generated from a
+    #     function G using:
         
-        π_i = μ_i * (1 + D_i G(μ))
+    #     π_i = μ_i * (1 + D_i G(μ))
         
-        where D_i is the partial derivative with respect to μ_i.
+    #     where D_i is the partial derivative with respect to μ_i.
         
-        Args:
-            generating_function: Function G that maps market weights to a real value
-            gradient_function: Gradient of G. If None, numerical differentiation is used
+    #     Args:
+    #         generating_function: Function G that maps market weights to a real value
+    #         gradient_function: Gradient of G. If None, numerical differentiation is used
             
-        Returns:
-            DataFrame of portfolio weights
-        """
-        weights = pd.DataFrame(index=self.market_model.market_weights.index, 
-                              columns=self.market_model.stock_names)
+    #     Returns:
+    #         DataFrame of portfolio weights
+    #     """
+    #     weights = pd.DataFrame(index=self.market_model.market_weights.index, 
+    #                           columns=self.market_model.stock_names)
         
-        # Function to numerically approximate the gradient if not provided
-        def numerical_gradient(func, x, eps=1e-6):
-            grad = np.zeros_like(x)
-            for i in range(len(x)):
-                x_plus = x.copy()
-                x_plus[i] += eps
-                x_minus = x.copy()
-                x_minus[i] -= eps
-                grad[i] = (func(x_plus) - func(x_minus)) / (2 * eps)
-            return grad
+    #     # Function to numerically approximate the gradient if not provided
+    #     def numerical_gradient(func, x, eps=1e-6):
+    #         grad = np.zeros_like(x)
+    #         for i in range(len(x)):
+    #             x_plus = x.copy()
+    #             x_plus[i] += eps
+    #             x_minus = x.copy()
+    #             x_minus[i] -= eps
+    #             grad[i] = (func(x_plus) - func(x_minus)) / (2 * eps)
+    #         return grad
         
-        for date in weights.index:
-            market_weights = self.market_model.market_weights.loc[date].values
+    #     for date in weights.index:
+    #         market_weights = self.market_model.market_weights.loc[date].values
             
-            # Calculate gradient
-            if gradient_function is not None:
-                grad = gradient_function(market_weights)
-            else:
-                grad = numerical_gradient(generating_function, market_weights)
+    #         # Calculate gradient
+    #         if gradient_function is not None:
+    #             grad = gradient_function(market_weights)
+    #         else:
+    #             grad = numerical_gradient(generating_function, market_weights)
             
-            # Calculate portfolio weights using Fernholz's formula
-            w = market_weights * (1 + grad)
+    #         # Calculate portfolio weights using Fernholz's formula
+    #         w = market_weights * (1 + grad)
             
-            # Normalize to ensure weights sum to 1
-            weights.loc[date] = w / np.sum(w)
+    #         # Normalize to ensure weights sum to 1
+    #         weights.loc[date] = w / np.sum(w)
             
-        return weights
+    #     return weights
     
-    def calculate_drift_process(self, portfolio_weights: pd.DataFrame) -> pd.Series:
-        """
-        Calculate the drift process of a portfolio relative to the market.
+    # def calculate_drift_process(self, portfolio_weights: pd.DataFrame) -> pd.Series:
+    #     """
+    #     Calculate the drift process of a portfolio relative to the market.
         
-        The drift process represents the excess growth rate of the portfolio
-        compared to the market portfolio. It is a key quantity in SPT.
+    #     The drift process represents the excess growth rate of the portfolio
+    #     compared to the market portfolio. It is a key quantity in SPT.
         
-        Args:
-            portfolio_weights: DataFrame of portfolio weights
+    #     Args:
+    #         portfolio_weights: DataFrame of portfolio weights
             
-        Returns:
-            Series of drift process values over time
-        """
-        drift = pd.Series(index=portfolio_weights.index)
+    #     Returns:
+    #         Series of drift process values over time
+    #     """
+    #     drift = pd.Series(index=portfolio_weights.index)
         
-        for date in portfolio_weights.index:
-            # Skip dates without covariance matrix
-            if self.market_model.cov_matrices is None or date not in self.market_model.cov_matrices:
-                drift[date] = np.nan
-                continue
+    #     for date in portfolio_weights.index:
+    #         # Skip dates without covariance matrix
+    #         if self.market_model.cov_matrices is None or date not in self.market_model.cov_matrices:
+    #             drift[date] = np.nan
+    #             continue
                 
-            # Get weights and covariance
-            pi = portfolio_weights.loc[date].values
-            mu = self.market_model.market_weights.loc[date].values
-            cov_matrix = self.market_model.cov_matrices[date]
+    #         # Get weights and covariance
+    #         pi = portfolio_weights.loc[date].values
+    #         mu = self.market_model.market_weights.loc[date].values
+    #         cov_matrix = self.market_model.cov_matrices[date]
             
-            # Calculate relative weights
-            relative_weights = np.zeros_like(pi)
-            nonzero_idx = mu > 0
-            relative_weights[nonzero_idx] = pi[nonzero_idx] / mu[nonzero_idx]
+    #         # Calculate relative weights
+    #         relative_weights = np.zeros_like(pi)
+    #         nonzero_idx = mu > 0
+    #         relative_weights[nonzero_idx] = pi[nonzero_idx] / mu[nonzero_idx]
             
-            # Calculate drift using Fernholz's formula (gamma_t)
-            # gamma_t = 0.5 * Σ_i σ_ii * (π_i/μ_i - 1)^2
-            drift[date] = 0.5 * np.sum(np.diag(cov_matrix) * (relative_weights - 1)**2)
+    #         # Calculate drift using Fernholz's formula (gamma_t)
+    #         # gamma_t = 0.5 * Σ_i σ_ii * (π_i/μ_i - 1)^2
+    #         drift[date] = 0.5 * np.sum(np.diag(cov_matrix) * (relative_weights - 1)**2)
             
-        return drift
+    #     return drift
+    
+    
+    
+    def _calculate_tau_mu_matrix_at_date(self, date: pd.Timestamp) -> Optional[np.ndarray]:
+        """
+        Calculates the matrix τ^μ(t) for a given date.
+        τ_ij^μ(t) is the covariance of the i-th and j-th stock's log-market-weight
+        relative to the market portfolio μ.
+        Defined by Fernholz (2002), Chapter I, Eq. (1.19) (for a general portfolio π)
+        and Chapter I, Eq. (2.6) (specifically for π = μ).
+
+        τ_ij^μ(t) = (μ(t) - e_i)' a(t) (μ(t) - e_j)
+        where:
+            μ(t) is the market weight vector at time t.
+            e_i is the i-th standard basis vector (a vector of zeros with a 1 at the i-th position).
+            a(t) is the covariance matrix of stock log-returns at time t.
+
+        Args:
+            date: The date for which to calculate τ^μ.
+
+        Returns:
+            The n x n matrix τ^μ(t), or None if covariance matrix a(t) is not available.
+        """
+        if self.market_model.cov_matrices is None or date not in self.market_model.cov_matrices:
+            # print(f"Warning: Covariance matrix a(t) not available for date {date}. Cannot calculate τ^μ.")
+            return None
+        if date not in self.market_model.market_weights.index:
+            # print(f"Warning: Market weights μ(t) not available for date {date}. Cannot calculate τ^μ.")
+            return None
+
+        mu_t = self.market_model.market_weights.loc[date].values
+        a_t = self.market_model.cov_matrices[date]
+        n = len(mu_t)
+        tau_mu_matrix = np.zeros((n, n), dtype=float)
+
+        for i in range(n):
+            e_i = np.zeros(n)
+            e_i[i] = 1.0
+            mu_minus_ei = mu_t - e_i
+            for j in range(n):
+                e_j = np.zeros(n)
+                e_j[j] = 1.0
+                mu_minus_ej = mu_t - e_j
+                tau_mu_matrix[i, j] = mu_minus_ei.T @ a_t @ mu_minus_ej
+        return tau_mu_matrix
+
+    def custom_generated_fernholz(self,
+                                 generating_function: Callable[[np.ndarray], float],
+                                 gradient_log_G_function: Optional[Callable[[np.ndarray], np.ndarray]] = None
+                                 ) -> pd.DataFrame:
+        """
+        Generates a portfolio strictly using Fernholz's generating function G(μ)
+        as defined in Chapter III, Eq. (11.1), page 32 of Fernholz (2002).
+
+        The portfolio weight for stock i (π_i) is given by:
+        π_i(t) = (D_i log G(μ(t)) + 1 - Σ_k μ_k(t) D_k log G(μ(t))) * μ_i(t)
+
+        Where:
+        - G(μ(t)): The user-defined positive generating function of market weights μ.
+        - log G(μ(t)): The natural logarithm of the generating function.
+        - D_k log G(μ(t)): The partial derivative of log G(μ(t)) with respect to μ_k(t).
+                           This is the k-th component of the gradient of log G.
+        - μ_i(t): The market weight of stock i at time t.
+
+        The term (1 - Σ_k μ_k(t) D_k log G(μ(t))) acts as a common factor that,
+        for appropriately chosen G (e.g., 1-homogeneous), ensures that the
+        portfolio weights π_i sum to 1 without explicit normalization.
+
+        Difference from previous implementation:
+        1. Works with `log G` and its gradient, not `G` and its gradient.
+        2. Includes the crucial summation term `Σ_k μ_k(t) D_k log G(μ(t))` which
+           is part of the core definition and ensures the portfolio sums to 1
+           under certain conditions on G.
+        3. The previous implementation `w = market_weights * (1 + grad_G)` was a
+           simpler heuristic and required explicit normalization. This version
+           implements the theoretical formula directly.
+
+        Args:
+            generating_function: Function G(μ) that maps market weights (np.ndarray)
+                                 to a positive scalar.
+            gradient_log_G_function: Optional. Analytical gradient of log G(μ).
+                                     If None, numerical differentiation is used.
+                                     Should take market weights (np.ndarray) and
+                                     return the gradient (np.ndarray).
+
+        Returns:
+            pd.DataFrame of portfolio weights (π_i) over time.
+        """
+        portfolio_weights_df = pd.DataFrame(index=self.market_model.market_weights.index,
+                                            columns=self.market_model.stock_names, dtype=float)
+
+        # Define the log_G function
+        log_G_func = lambda mu_vec: np.log(generating_function(mu_vec))
+
+        for date in portfolio_weights_df.index:
+            market_w_t = self.market_model.market_weights.loc[date].values
+
+            # Ensure no zero market weights if G involves division by mu_k, or log G involves log(mu_k)
+            # For log G, G itself must be positive.
+            if generating_function(market_w_t) <= 0:
+                # print(f"Warning: G(μ) is non-positive for date {date}. Skipping portfolio generation.")
+                portfolio_weights_df.loc[date] = np.nan # Or handle as error/fallback
+                continue
+
+            # Calculate gradient of log G(μ)
+            if gradient_log_G_function is not None:
+                grad_log_G_t = gradient_log_G_function(market_w_t)
+            else:
+                grad_log_G_t = self._numerical_gradient(log_G_func, market_w_t)
+
+            # Calculate Σ_k μ_k(t) D_k log G(μ(t))
+            sum_term_S_t = np.sum(market_w_t * grad_log_G_t)
+
+            # Calculate portfolio weights π_i(t)
+            # π_i(t) = (D_i log G + 1 - S_t) * μ_i(t)
+            pi_t = (grad_log_G_t + 1 - sum_term_S_t) * market_w_t
+
+            # For numerical stability and to ensure weights sum exactly to 1,
+            # especially if G is not perfectly 1-homogeneous or due to numerical errors.
+            # The theory implies sum(pi_t) = 1 if G is 1-homogeneous.
+            if np.abs(np.sum(pi_t) - 1.0) > 1e-6 : # Tolerance for sum check
+                 # print(f"Warning: Weights for date {date} do not sum to 1 (sum={np.sum(pi_t)}). Normalizing.")
+                 if np.sum(pi_t) != 0: # Avoid division by zero
+                    pi_t = pi_t / np.sum(pi_t)
+                 else: # Fallback if sum is zero (e.g. all weights became zero)
+                    pi_t = np.full_like(pi_t, 1.0 / len(pi_t))
+
+
+            portfolio_weights_df.loc[date] = pi_t
+
+        return portfolio_weights_df
+
+    def calculate_drift_process_fernholz(self,
+                                         portfolio_weights_fernholz_g: pd.DataFrame, # Weights from custom_generated_fernholz
+                                         generating_function: Callable[[np.ndarray], float],
+                                         hessian_G_function: Optional[Callable[[np.ndarray], np.ndarray]] = None
+                                         ) -> pd.Series:
+        """
+        Calculates the drift process g(t) for a portfolio generated by G(μ)
+        according to Fernholz's "master formula" framework.
+        Ref: Chapter III, Eq. (11.3), page 32 of Fernholz (2002).
+
+        The drift g(t) is given by:
+        g(t) = -1 / (2 * G(μ(t))) * Σ_i Σ_j D_ij^2 G(μ(t)) * μ_i(t) * μ_j(t) * τ_ij^μ(t)
+
+        Where:
+        - G(μ(t)): The same generating function used to create portfolio_weights_fernholz_g.
+        - D_ij^2 G(μ(t)): The (i,j)-th element of the Hessian matrix of G(μ(t))
+                          (i.e., ∂²G / (∂μ_i ∂μ_j)).
+        - μ_i(t), μ_j(t): Market weights of stocks i and j at time t.
+        - τ_ij^μ(t): The (i,j)-th element of the matrix of covariances of individual
+                     stocks' log-market-weights relative to the market portfolio μ.
+                     Calculated as (μ(t) - e_i)' a(t) (μ(t) - e_j).
+
+        This g(t) appears in the master formula:
+        log(V_π(T)/V_μ(T)) = log(G(μ(T))/G(μ(0))) + ∫ g(t) dt
+
+        Difference from previous `calculate_drift_process`:
+        1. This formula is specific to portfolios π generated by G via Eq. (11.1).
+           The previous one was a general measure of deviation.
+        2. Explicitly depends on the generating function G and its second derivatives (Hessian).
+        3. Uses τ_ij^μ(t) (covariances of log market weights relative to μ), not just
+           individual stock return variances a_ii(t).
+        4. Involves a double summation over all pairs (i,j).
+        5. The previous formula `0.5 * np.sum(diag(a_t) * (π/μ - 1)**2)` would be zero
+           if π = μ. This g(t) is not necessarily zero even if G generates π = μ
+           (e.g., if G is constant, Hessian is 0, so g(t)=0, which is consistent).
+
+        Args:
+            portfolio_weights_fernholz_g: Portfolio weights DataFrame generated by
+                                          `custom_generated_fernholz` using `generating_function`.
+                                          Not directly used in calculation but ensures context.
+            generating_function: The G(μ) function.
+            hessian_G_function: Optional. Analytical Hessian of G(μ).
+                                If None, numerical differentiation is used.
+                                Should take market weights (np.ndarray) and
+                                return the Hessian matrix (np.ndarray).
+
+        Returns:
+            pd.Series of the drift process g(t) values over time.
+        """
+        drift_series = pd.Series(index=self.market_model.market_weights.index, dtype=float)
+
+        for date in drift_series.index:
+            market_w_t = self.market_model.market_weights.loc[date].values
+            n_stocks = len(market_w_t)
+
+            # Calculate G(μ(t))
+            G_mu_t = generating_function(market_w_t)
+            if G_mu_t == 0: # Avoid division by zero; G should be positive
+                # print(f"Warning: G(μ(t)) is zero for date {date}. Skipping drift calculation.")
+                drift_series.loc[date] = np.nan
+                continue
+
+            # Calculate Hessian D_ij^2 G(μ(t))
+            if hessian_G_function is not None:
+                hessian_G_t = hessian_G_function(market_w_t)
+            else:
+                hessian_G_t = self._numerical_hessian(generating_function, market_w_t)
+
+            # Calculate τ^μ(t)
+            tau_mu_t = self._calculate_tau_mu_matrix_at_date(date)
+            if tau_mu_t is None:
+                # print(f"Warning: τ^μ(t) not available for date {date}. Skipping drift calculation.")
+                drift_series.loc[date] = np.nan
+                continue
+
+            # Calculate the double summation term
+            # Σ_i Σ_j D_ij^2 G(μ) * μ_i * μ_j * τ_ij^μ
+            double_sum_term = 0.0
+            for i in range(n_stocks):
+                for j in range(n_stocks):
+                    double_sum_term += hessian_G_t[i, j] * \
+                                       market_w_t[i] * \
+                                       market_w_t[j] * \
+                                       tau_mu_t[i, j]
+
+            # Calculate g(t)
+            g_t = (-1.0 / (2.0 * G_mu_t)) * double_sum_term
+            drift_series.loc[date] = g_t
+
+        return drift_series
+
+
