@@ -1,10 +1,10 @@
 # Fernholz Stochastic Portfolio Theory (SPT) Library
 
-[![PyPI version](https://badge.fury.io/py/fernholz-spt.svg)](https://badge.fury.io/py/fernholz-spt)
+<!-- [![PyPI version](https://badge.fury.io/py/fernholz-spt.svg)](https://badge.fury.io/py/fernholz-spt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation Status](https://readthedocs.org/projects/fernholz-spt/badge/?version=latest)](https://fernholz-spt.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/fernholz-spt/badge/?version=latest)](https://fernholz-spt.readthedocs.io/en/latest/?badge=latest) -->
 
-A comprehensive Python implementation of E. Robert Fernholz's Stochastic Portfolio Theory framework. This library provides tools for researchers, quantitative analysts, and portfolio managers to analyze, optimize, and simulate equity portfolios using the mathematical framework of Stochastic Portfolio Theory.
+<!-- A comprehensive Python implementation of E. Robert Fernholz's Stochastic Portfolio Theory framework. This library provides tools for researchers, quantitative analysts, and portfolio managers to analyze, optimize, and simulate equity portfolios using the mathematical framework of Stochastic Portfolio Theory.
 
 ## Table of Contents
 
@@ -30,7 +30,9 @@ Key insights from SPT include:
 3. Quantifying the benefits of portfolio diversification in terms of excess growth rate
 4. Analyzing how market concentration affects portfolio performance
 
-This library implements the core mathematical concepts from Fernholz's work, making them accessible for practical portfolio management and academic research.
+This library implements the core mathematical concepts from Fernholz's work, making them accessible for practical portfolio management and academic research. -->
+
+> ⚠️ **WARNING: This project is a work in progress!** We have just started development and many features may be incomplete or unstable. If you'd like to contribute to this early-stage project, please feel free to create a pull request.
 
 ## Key Features
 
@@ -63,7 +65,7 @@ This library implements the core mathematical concepts from Fernholz's work, mak
   - Turnover analysis
   - Diversification metrics
 
-## Installation
+<!-- ## Installation
 
 ### Using pip
 
@@ -335,7 +337,7 @@ SPTVisualizer.plot_portfolio_comparison(portfolio_dict, metric='Excess Growth')
 ### Utils Module
 
 - **DataHandler**: Data processing and preparation
-- **SPTVisualizer**: Visualization tools
+- **SPTVisualizer**: Visualization tools -->
 
 ## Mathematical Background
 
@@ -387,7 +389,7 @@ where $g(\mu)$ is the growth rate of the market portfolio.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Development Setup
+<!-- ### Development Setup
 
 1. Fork the repository
 2. Create a virtual environment: `python -m venv venv`
@@ -402,7 +404,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Follow PEP 8 style guidelines
 - Add docstrings to all functions and classes
 - Include unit tests for new features
-- Ensure mathematical correctness and numerical stability
+- Ensure mathematical correctness and numerical stability -->
 
 ## Citation
 
@@ -424,10 +426,10 @@ If you use this library in your research, please cite:
 - Fernholz, E.R. & Karatzas, I. (2009). Stochastic Portfolio Theory: A Survey. In: Handbook of Numerical Analysis. Elsevier.
 - Fernholz, R., Karatzas, I. & Kardaras, C. (2005). Diversity and Relative Arbitrage in Equity Markets. Finance and Stochastics, 9(1), 1-27.
 
-## License
+<!-- ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgements
 
-This implementation draws inspiration from the original theoretical work of E. Robert Fernholz and subsequent contributions to the field of Stochastic Portfolio Theory.
+This implementation draws inspiration from the original theoretical work of E. Robert Fernholz and subsequent contributions to the field of Stochastic Portfolio Theory. -->
