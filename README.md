@@ -7,6 +7,7 @@
 <!-- A comprehensive Python implementation of E. Robert Fernholz's Stochastic Portfolio Theory framework. This library provides tools for researchers, quantitative analysts, and portfolio managers to analyze, optimize, and simulate equity portfolios using the mathematical framework of Stochastic Portfolio Theory.
 
 ## Table of Contents
+-checking git
 
 - [Introduction to Stochastic Portfolio Theory](#introduction-to-stochastic-portfolio-theory)
 - [Key Features](#key-features)
