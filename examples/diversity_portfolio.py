@@ -28,7 +28,7 @@ print("Cleaned Weights DataFrame:")
 print(div_weights.dtypes)
 print(div_weights.head())
 print(div_weights.tail())
-
+print("chechking")
 # Visualize
 SPTVisualizer.plot_weight_evolution(div_weights)
 SPTVisualizer.plot_drift_analysis(drift)
